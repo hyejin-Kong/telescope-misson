@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>망원경 미션: 별을 만나는 길</title>
+<meta name="description" content="중학교 과학 태양계 단원 - 천체 망원경의 구조와 사용법을 미션으로 배우고 스텔라리움으로 밤하늘을 관측해보는 학습 게임">
+<meta property="og:title" content="망원경 미션: 별을 만나는 길">
+<meta property="og:description" content="4개의 미션을 완료하면 진짜 밤하늘을 볼 수 있어요">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%230B0F24'/%3E%3Ctext x='50' y='68' font-size='58' text-anchor='middle'%3E%F0%9F%94%AD%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;500;700;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-void:#0B0F24;
+    --bg-panel:#141a3a;
+    --panel-border:#2b3268;
+    --star-gold:#f5c84c;
+    --aurora-teal:#5eead4;
+    --nebula-coral:#ff7a6b;
+    --starlight:#edeffb;
+    --muted:#8b93c4;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg-void);
+    color:var(--starlight);
+    font-family:'Noto Sans KR',sans-serif;
+    min-height:100vh;
+    overflow-x:hidden;
+    position:relative;
+  }
+  #stars{position:fixed;inset:0;z-index:0;pointer-events:none;}
+  .star-dot{position:absolute;background:#fff;border-radius:50%;opacity:.6;animation:twinkle 3.5s ease-in-out infinite;}
+  @keyframes twinkle{0%,100%{opacity:.15;}50%{opacity:.9;}}
+
+  .app{position:relative;z-index:1;max-width:760px;margin:0 auto;padding:28px 18px 60px;}
+
+  .site-footer{
+    position:relative;z-index:1;text-align:center;padding:20px 18px 34px;
+    font-family:'Space Mono',monospace;font-size:11.5px;color:var(--muted);
+    letter-spacing:.05em;
+  }
+
+  header{text-align:center;margin-bottom:18px;}
+  .eyebrow{
+    font-family:'Space Mono',monospace;
+    font-size:12px;
+    letter-spacing:.24em;
+    color:var(--muted);
+    text-transform:uppercase;
+  }
+  h1{
+    font-family:'Black Han Sans',sans-serif;
+    font-size:clamp(26px,6vw,38px);
+    margin:6px 0 4px;
+    color:var(--star-gold);
+    letter-spacing:.01em;
+  }
+  .sub{color:var(--muted);font-size:14px;margin:0;}
+
+  /* constellation progress */
+  .constellation-wrap{display:flex;justify-content:center;margin:22px 0 26px;}
+  .constellation{width:100%;max-width:420px;}
+  .c-line{stroke:#2b3268;stroke-width:2;transition:stroke 0.6s ease;}
+  .c-line.lit{stroke:var(--star-gold);}
+  .c-star{fill:#2b3268;transition:fill 0.5s ease, filter 0.5s ease;}
+  .c-star.lit{fill:var(--star-gold);filter:drop-shadow(0 0 6px var(--star-gold));}
+  .c-label{font-family:'Space Mono',monospace;font-size:10px;fill:var(--muted);}
+
+  .mission-counter{
+    text-align:center;font-family:'Space Mono',monospace;
+    font-size:12px;color:var(--muted);margin-bottom:10px;letter-spacing:.08em;
+  }
+
+  .panel{
+    background:var(--bg-panel);
+    border:1px solid var(--panel-border);
+    border-radius:16px;
+    padding:22px 20px 24px;
+    box-shadow:0 20px 60px rgba(0,0,0,.4);
+  }
+  .m-title{
+    font-family:'Black Han Sans',sans-serif;
+    font-size:20px;color:var(--starlight);margin:0 0 6px;
+  }
+  .m-desc{color:var(--muted);font-size:13.5px;line-height:1.6;margin:0 0 18px;}
+
+  .hint{
+    font-size:12.5px;color:var(--star-gold);min-height:18px;margin-bottom:10px;
+    font-family:'Space Mono',monospace;
+  }
+
+  /* Mission 1: matching */
+  svg.diagram{width:100%;height:auto;display:block;margin-bottom:16px;}
+  .hotspot{cursor:pointer;}
+  .hotspot circle{fill:rgba(245,200,76,.14);stroke:var(--star-gold);stroke-width:2;transition:all .25s;}
+  .hotspot text{fill:var(--star-gold);font-family:'Space Mono',monospace;font-size:13px;font-weight:700;}
+  .hotspot.matched circle{fill:rgba(94,234,212,.18);stroke:var(--aurora-teal);}
+  .hotspot.matched text{fill:var(--aurora-teal);}
+  .hotspot.wrong circle{stroke:var(--nebula-coral);}
+  .hotspot-label{font-family:'Noto Sans KR',sans-serif;font-size:11.5px;fill:var(--muted);}
+
+  .label-bank{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{
+    padding:9px 14px;border-radius:999px;border:1px solid var(--panel-border);
+    background:#1b2150;color:var(--starlight);font-size:13.5px;cursor:pointer;
+    transition:all .2s; user-select:none;
+  }
+  .chip:hover{border-color:var(--star-gold);}
+  .chip.selected{background:var(--star-gold);color:#1a1300;border-color:var(--star-gold);font-weight:700;}
+  .chip.used{opacity:.25;pointer-events:none;text-decoration:line-through;}
+
+  /* Mission 2: ordering */
+  .slot-row{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+  .slot{
+    flex:1;min-width:0;min-height:52px;border:1.5px dashed var(--panel-border);
+    border-radius:10px;display:flex;align-items:center;justify-content:center;
+    font-family:'Space Mono',monospace;font-size:12px;color:var(--muted);text-align:center;padding:4px;
+  }
+  .slot.filled{border-style:solid;border-color:var(--aurora-teal);color:var(--starlight);background:#132a26;font-family:'Noto Sans KR',sans-serif;font-size:12.5px;}
+  .step-card{
+    padding:12px 14px;border-radius:10px;background:#1b2150;border:1px solid var(--panel-border);
+    cursor:pointer;margin-bottom:8px;font-size:13.5px;transition:all .2s;
+  }
+  .step-card:hover{border-color:var(--star-gold);}
+  .step-card.used{opacity:.25;pointer-events:none;}
+
+  /* Mission 3: focus */
+  .scope-view{
+    width:100%;aspect-ratio:16/9;border-radius:12px;background:radial-gradient(ellipse at center,#0d1230 0%,#05070f 100%);
+    position:relative;overflow:hidden;margin-bottom:16px;border:1px solid var(--panel-border);
+  }
+  .scope-view::before{
+    content:"";position:absolute;inset:0;border-radius:50%;border:10px solid #05070f;
+    box-shadow:0 0 0 3000px #05070f;
+    width:92%;height:92%;top:4%;left:4%;
+  }
+  .star-field{position:absolute;inset:0;}
+  .fstar{position:absolute;background:#fff;border-radius:50%;}
+  input[type=range]{width:100%;accent-color:var(--star-gold);margin:6px 0 4px;}
+  .range-labels{display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:11px;color:var(--muted);}
+
+  /* Mission 4: quiz */
+  .quiz-q{margin-bottom:18px;}
+  .quiz-q p{font-size:14px;margin:0 0 8px;font-weight:500;}
+  .opt{
+    display:block;width:100%;text-align:left;padding:10px 12px;margin-bottom:6px;
+    border-radius:8px;border:1px solid var(--panel-border);background:#1b2150;color:var(--starlight);
+    cursor:pointer;font-size:13px;font-family:'Noto Sans KR',sans-serif;
+  }
+  .opt.selected{border-color:var(--star-gold);background:#2a2413;}
+  .opt.correct{border-color:var(--aurora-teal);background:#132a26;}
+  .opt.incorrect{border-color:var(--nebula-coral);background:#2a1616;}
+
+  .btn-row{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;}
+  button.primary{
+    font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:14px;
+    padding:11px 22px;border-radius:999px;border:none;background:var(--star-gold);color:#1a1300;
+    cursor:pointer;transition:transform .15s;
+  }
+  button.primary:disabled{opacity:.3;cursor:not-allowed;}
+  button.primary:not(:disabled):hover{transform:translateY(-1px);}
+  button.ghost{
+    font-family:'Noto Sans KR',sans-serif;font-size:13px;padding:11px 18px;border-radius:999px;
+    border:1px solid var(--panel-border);background:transparent;color:var(--muted);cursor:pointer;
+  }
+
+  .shake{animation:shake .35s;}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-5px);}75%{transform:translateX(5px);}}
+
+  /* final screen */
+  .final{text-align:center;padding:30px 10px;}
+  .final h2{font-family:'Black Han Sans',sans-serif;font-size:26px;color:var(--star-gold);margin-bottom:8px;}
+  .final p{color:var(--muted);font-size:13.5px;line-height:1.7;margin-bottom:22px;}
+  .cta{
+    display:inline-block;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:15px;
+    padding:14px 26px;border-radius:999px;background:var(--star-gold);color:#1a1300;text-decoration:none;
+    box-shadow:0 10px 30px rgba(245,200,76,.25);
+  }
+  .cta.secondary{
+    display:block;margin-top:12px;background:transparent;color:var(--muted);border:1px solid var(--panel-border);
+    box-shadow:none;font-weight:500;font-size:13px;
+  }
+</style>
+</head>
+<body>
+<div id="stars"></div>
+<div class="app">
+  <header>
+    <div class="eyebrow">태양계 단원</div>
+    <h1>망원경 미션: 별을 만나는 길</h1>
+    <p class="sub">4개의 미션을 완료하면 진짜 밤하늘을 볼 수 있어요</p>
+  </header>
+
+  <div class="constellation-wrap">
+    <svg class="constellation" viewBox="0 0 400 110">
+      <line id="l1" class="c-line" x1="40" y1="80" x2="140" y2="30"/>
+      <line id="l2" class="c-line" x1="140" y1="30" x2="240" y2="60"/>
+      <line id="l3" class="c-line" x1="240" y1="60" x2="360" y2="20"/>
+      <circle id="s0" class="c-star" cx="40" cy="80" r="7"/>
+      <circle id="s1" class="c-star" cx="140" cy="30" r="7"/>
+      <circle id="s2" class="c-star" cx="240" cy="60" r="7"/>
+      <circle id="s3" class="c-star" cx="360" cy="20" r="7"/>
+      <text class="c-label" x="24" y="100">부품매칭</text>
+      <text class="c-label" x="112" y="18">조립순서</text>
+      <text class="c-label" x="212" y="80">초점맞추기</text>
+      <text class="c-label" x="332" y="10">최종퀴즈</text>
+    </svg>
+  </div>
+
+  <div class="mission-counter" id="missionCounter" style="display:none;">MISSION 1 / 4</div>
+
+  <div class="panel" id="panel"></div>
+</div>
+
+<footer class="site-footer">
+  <p>중학교 과학 · 태양계 단원 학습 자료</p>
+</footer>
+
+<script>
+/* ---------- 배경 별 생성 ---------- */
+const starsBg = document.getElementById('stars');
+for(let i=0;i<80;i++){
+  const d=document.createElement('div');
+  d.className='star-dot';
+  const size=Math.random()*2+1;
+  d.style.width=size+'px';d.style.height=size+'px';
+  d.style.left=Math.random()*100+'%';
+  d.style.top=Math.random()*100+'%';
+  d.style.animationDelay=(Math.random()*3.5)+'s';
+  starsBg.appendChild(d);
+}
+
+/* ---------- 상태 ---------- */
+let currentMission = 0;
+let started = false;
+const missionDone = [false,false,false,false];
+
+function lightConstellation(idx){
+  document.getElementById('s'+idx).classList.add('lit');
+  if(idx>0) document.getElementById('l'+idx).classList.add('lit');
+}
+
+function renderStart(){
+  document.getElementById('panel').innerHTML = `
+    <div class="final" style="padding:20px 6px;">
+      <h2 style="margin-bottom:14px;">🔭 관측을 시작하기 전에</h2>
+      <p style="text-align:left;">천체 망원경을 다루려면 구조를 알고, 조립할 줄 알고, 초점을 맞출 줄 알아야 해요.<br>4개의 미션을 순서대로 통과하면 실제 밤하늘을 볼 수 있는 스텔라리움으로 안내해드릴게요.</p>
+      <button class="primary" id="startBtn" style="margin-top:6px;">미션 시작하기</button>
+    </div>
+  `;
+  document.getElementById('startBtn').addEventListener('click', ()=>{
+    started = true;
+    document.getElementById('missionCounter').style.display='block';
+    render();
+  });
+}
+
+function goNext(){
+  missionDone[currentMission]=true;
+  lightConstellation(currentMission);
+  currentMission++;
+  document.getElementById('missionCounter').textContent = currentMission<4 ? `MISSION ${currentMission+1} / 4` : 'MISSION CLEAR';
+  render();
+}
+
+/* ================= MISSION 1: 부품 매칭 ================= */
+const parts = [
+  {id:'obj', name:'대물렌즈'},
+  {id:'eye', name:'접안렌즈'},
+  {id:'tube', name:'경통'},
+  {id:'finder', name:'보조 망원경'},
+  {id:'focus', name:'초점조절나사'},
+  {id:'mount', name:'가대'},
+  {id:'weight', name:'균형추'}
+];
+const hotspots = [
+  {num:1, id:'obj',    x:65,  y:110},
+  {num:2, id:'finder', x:150, y:122},
+  {num:3, id:'focus',  x:208, y:188},
+  {num:4, id:'eye',    x:253, y:178},
+  {num:5, id:'tube',   x:108, y:140},
+  {num:6, id:'mount',  x:246, y:228},
+  {num:7, id:'weight', x:133, y:305}
+];
+let m1selectedLabel = null;
+let m1matched = new Set();
+
+function shuffledParts(){
+  return [...parts].sort(()=>Math.random()-0.5);
+}
+let m1labelOrder = shuffledParts();
+
+function renderMission1(){
+  m1selectedLabel=null;
+  m1matched=new Set();
+
+  const hotspotsSvg = hotspots.map(h=>`
+    <g class="hotspot" data-id="${h.id}" data-num="${h.num}">
+      <circle cx="${h.x}" cy="${h.y}" r="20"/>
+      <text x="${h.x}" y="${h.y+5}" text-anchor="middle">${h.num}</text>
+    </g>
+  `).join('');
+
+  const chips = m1labelOrder.map(p=>`<div class="chip" data-id="${p.id}">${p.name}</div>`).join('');
+
+  document.getElementById('panel').innerHTML = `
+    <div class="m-title">미션 1 · 부품 이름을 찾아라</div>
+    <p class="m-desc">아래에서 부품 이름을 먼저 고른 뒤, 망원경 그림에서 알맞은 번호를 클릭하세요.</p>
+    <div class="hint" id="m1hint">부품 이름을 선택해 보세요</div>
+    <svg class="diagram" viewBox="0 0 460 420">
+      <!-- 삼각대 다리 -->
+      <line x1="235" y1="240" x2="120" y2="382" stroke="#a9afd6" stroke-width="7" stroke-linecap="round"/>
+      <line x1="235" y1="240" x2="235" y2="396" stroke="#a9afd6" stroke-width="7" stroke-linecap="round"/>
+      <line x1="235" y1="240" x2="350" y2="382" stroke="#a9afd6" stroke-width="7" stroke-linecap="round"/>
+      <circle cx="120" cy="382" r="5" fill="#565e91"/>
+      <circle cx="235" cy="396" r="5" fill="#565e91"/>
+      <circle cx="350" cy="382" r="5" fill="#565e91"/>
+      <polygon points="170,320 235,335 300,320" fill="none" stroke="#565e91" stroke-width="2"/>
+
+      <!-- 균형추 -->
+      <line x1="222" y1="248" x2="140" y2="298" stroke="#565e91" stroke-width="7" stroke-linecap="round"/>
+      <rect x="112" y="282" width="38" height="46" rx="15" fill="#1b2150" stroke="#2b3268" stroke-width="2"/>
+
+      <!-- 가대(적도의) -->
+      <rect x="203" y="196" width="66" height="52" rx="9" fill="#1b2150" stroke="#2b3268" stroke-width="2"/>
+      <polygon points="203,196 218,158 250,158 269,196" fill="#1b2150" stroke="#2b3268" stroke-width="2"/>
+      <circle cx="200" cy="207" r="8" fill="#0d1230" stroke="#f5c84c" stroke-width="1.5"/>
+      <circle cx="272" cy="220" r="7" fill="#0d1230" stroke="#f5c84c" stroke-width="1.5"/>
+
+      <!-- 경통(주경) -->
+      <line x1="250" y1="205" x2="65" y2="110" stroke="#dde2f6" stroke-width="30" stroke-linecap="round"/>
+      <line x1="250" y1="205" x2="65" y2="110" stroke="#8b93c4" stroke-width="1" stroke-dasharray="2 10" opacity="0.4"/>
+      <line x1="205" y1="182" x2="197" y2="165" stroke="#2b3268" stroke-width="6"/>
+      <line x1="160" y1="160" x2="152" y2="143" stroke="#2b3268" stroke-width="6"/>
+      <line x1="115" y1="138" x2="107" y2="121" stroke="#2b3268" stroke-width="6"/>
+
+      <!-- 대물렌즈 -->
+      <circle cx="65" cy="110" r="17" fill="#0d1230" stroke="#f5c84c" stroke-width="2"/>
+      <circle cx="65" cy="110" r="9" fill="#1b2b4a"/>
+
+      <!-- 접안부 + 접안렌즈 -->
+      <rect x="246" y="172" width="15" height="34" rx="4" fill="#1b2150" stroke="#2b3268" stroke-width="2"/>
+      <circle cx="253" cy="176" r="7" fill="#0d1230" stroke="#f5c84c" stroke-width="1.5"/>
+
+      <!-- 초점조절나사 -->
+      <circle cx="208" cy="188" r="9" fill="#1b2150" stroke="#2b3268" stroke-width="2"/>
+      <line x1="208" y1="180" x2="208" y2="196" stroke="#2b3268" stroke-width="1.5"/>
+
+      <!-- 보조 망원경 -->
+      <line x1="235" y1="165" x2="140" y2="120" stroke="#c3c9ec" stroke-width="13" stroke-linecap="round"/>
+      <circle cx="140" cy="120" r="7" fill="#0d1230" stroke="#f5c84c" stroke-width="1.5"/>
+      <circle cx="235" cy="165" r="6" fill="#0d1230" stroke="#f5c84c" stroke-width="1.5"/>
+
+      ${hotspotsSvg}
+    </svg>
+    <div class="label-bank" id="m1chips">${chips}</div>
+    <div class="btn-row">
+      <button class="primary" id="m1next" disabled>다음 미션으로</button>
+    </div>
+  `;
+
+  document.querySelectorAll('#m1chips .chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      document.querySelectorAll('#m1chips .chip').forEach(c=>c.classList.remove('selected'));
+      chip.classList.add('selected');
+      m1selectedLabel = chip.dataset.id;
+      document.getElementById('m1hint').textContent = '이제 그림에서 알맞은 번호를 클릭하세요';
+    });
+  });
+
+  document.querySelectorAll('.hotspot').forEach(h=>{
+    h.addEventListener('click', ()=>{
+      if(h.classList.contains('matched')) return;
+      if(!m1selectedLabel){
+        document.getElementById('m1hint').textContent = '먼저 아래에서 부품 이름을 골라주세요!';
+        return;
+      }
+      if(h.dataset.id === m1selectedLabel){
+        h.classList.add('matched');
+        const part = parts.find(p=>p.id===m1selectedLabel);
+        h.querySelector('text').textContent = part.name;
+        document.querySelector(`#m1chips .chip[data-id="${m1selectedLabel}"]`).classList.add('used');
+        m1matched.add(m1selectedLabel);
+        m1selectedLabel=null;
+        document.getElementById('m1hint').textContent = m1matched.size===7 ? '전체 부품을 다 찾았어요! 다음 미션으로 이동하세요.' : '정답! 다음 부품을 골라보세요';
+        if(m1matched.size===7){
+          document.getElementById('m1next').disabled=false;
+        }
+      } else {
+        h.classList.add('wrong');
+        h.parentElement.classList.add('shake');
+        setTimeout(()=>{h.classList.remove('wrong'); h.parentElement.classList.remove('shake');},350);
+        document.getElementById('m1hint').textContent = '음... 다른 위치예요. 다시 시도해보세요.';
+      }
+    });
+  });
+
+  document.getElementById('m1next').addEventListener('click', goNext);
+}
+
+/* ================= MISSION 2: 조립·관측 순서 ================= */
+const steps = [
+  {id:1, text:'평평한 곳에 삼각대를 세운다'},
+  {id:2, text:'삼각대 위에 가대를 끼우고 고정한다'},
+  {id:3, text:'가대에 균형추를 끼운다'},
+  {id:4, text:'경통을 가대 위에 올려놓은 뒤 고정한다'},
+  {id:5, text:'보조 망원경을 먼저 끼우고, 접안렌즈는 초점 거리가 긴 것으로 끼운다'},
+  {id:6, text:'균형추로 천체 망원경의 균형을 맞춘다'}
+];
+let m2selectedOrder = [];
+let m2stepOrder = [...steps].sort(()=>Math.random()-0.5);
+
+function renderMission2(){
+  m2selectedOrder=[];
+  const cards = m2stepOrder.map(s=>`<div class="step-card" data-id="${s.id}">${s.text}</div>`).join('');
+  const slots = steps.map((_,i)=>`<div class="slot" id="slot${i}">${i+1}</div>`).join('');
+
+  document.getElementById('panel').innerHTML = `
+    <div class="m-title">미션 2 · 천체 망원경 조립 순서 맞추기</div>
+    <p class="m-desc">교과서에 나온 조립 순서를 떠올리며, 아래 카드를 순서대로(삼각대 설치 → 균형 맞추기) 클릭해서 위 빈칸을 채워보세요.</p>
+    <div class="hint" id="m2hint">1번부터 순서대로 클릭하세요</div>
+    <div class="slot-row">${slots}</div>
+    <div id="m2cards">${cards}</div>
+    <div class="btn-row">
+      <button class="ghost" id="m2reset">다시 배열하기</button>
+      <button class="primary" id="m2check" disabled>제출하기</button>
+    </div>
+  `;
+
+  document.querySelectorAll('#m2cards .step-card').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      if(card.classList.contains('used')) return;
+      if(m2selectedOrder.length>=steps.length) return;
+      const idx = m2selectedOrder.length;
+      m2selectedOrder.push(parseInt(card.dataset.id));
+      const slot = document.getElementById('slot'+idx);
+      slot.textContent = card.textContent;
+      slot.classList.add('filled');
+      card.classList.add('used');
+      if(m2selectedOrder.length===steps.length){
+        document.getElementById('m2check').disabled=false;
+        document.getElementById('m2hint').textContent='제출하기를 눌러 확인해보세요';
+      }
+    });
+  });
+
+  document.getElementById('m2reset').addEventListener('click', renderMission2);
+
+  document.getElementById('m2check').addEventListener('click', ()=>{
+    const correct = m2selectedOrder.every((id,i)=>id===steps[i].id);
+    if(correct){
+      document.getElementById('m2hint').textContent='정확해요! 순서를 완벽히 이해했네요.';
+      document.getElementById('m2check').outerHTML = '<button class="primary" id="m2next">다음 미션으로</button>';
+      document.getElementById('m2next').addEventListener('click', goNext);
+    } else {
+      document.getElementById('m2hint').textContent='순서가 조금 어긋났어요. 다시 배열해보세요!';
+      document.getElementById('panel').classList.add('shake');
+      setTimeout(()=>{
+        document.getElementById('panel').classList.remove('shake');
+        renderMission2();
+      },500);
+    }
+  });
+}
+
+/* ================= MISSION 3: 초점 맞추기 ================= */
+let m3target;
+const m3tolerance = 6;
+
+function renderMission3(){
+  m3target = 5 + Math.floor(Math.random()*90); // 매번 5~95 사이 랜덤 위치
+  document.getElementById('panel').innerHTML = `
+    <div class="m-title">미션 3 · 초점조절나사로 초점 맞추기</div>
+    <p class="m-desc">슬라이더를 움직여 흐릿한 별을 선명하게 만들어보세요. 실제로 초점조절나사를 돌리는 것과 같은 원리예요.</p>
+    <div class="scope-view"><div class="star-field" id="starField"></div></div>
+    <input type="range" id="focusSlider" min="0" max="100" value="0">
+    <div class="range-labels"><span>흐림</span><span>선명</span></div>
+    <div class="hint" id="m3hint">슬라이더를 조금씩 움직여보세요</div>
+    <div class="btn-row">
+      <button class="primary" id="m3next" disabled>다음 미션으로</button>
+    </div>
+  `;
+
+  const field = document.getElementById('starField');
+  const starCount=14;
+  const starEls=[];
+  for(let i=0;i<starCount;i++){
+    const s=document.createElement('div');
+    s.className='fstar';
+    const size = Math.random()*3+2;
+    s.style.width=size+'px';
+    s.style.height=size+'px';
+    s.style.left=(10+Math.random()*80)+'%';
+    s.style.top=(10+Math.random()*80)+'%';
+    field.appendChild(s);
+    starEls.push(s);
+  }
+
+  const slider = document.getElementById('focusSlider');
+  slider.addEventListener('input', ()=>{
+    const val = parseInt(slider.value);
+    const dist = Math.abs(val - m3target);
+    const blur = Math.max(0, dist*0.35);
+    starEls.forEach(s=>{
+      s.style.filter = `blur(${blur}px)`;
+      s.style.boxShadow = blur<2 ? '0 0 6px #fff' : 'none';
+    });
+    if(dist<=m3tolerance){
+      document.getElementById('m3hint').textContent='초점이 딱 맞았어요! 별이 선명하게 보이네요.';
+      document.getElementById('m3next').disabled=false;
+    } else {
+      document.getElementById('m3hint').textContent = dist<20 ? '거의 다 왔어요, 조금만 더!' : '아직 흐릿해요, 계속 돌려보세요.';
+    }
+  });
+
+  document.getElementById('m3next').addEventListener('click', goNext);
+}
+
+/* ================= MISSION 4: 퀴즈 ================= */
+const quiz = [
+  {
+    q:'망원경으로 절대 직접 관측하면 안 되는 천체는?',
+    opts:['달','목성','태양','금성'],
+    correct:2
+  },
+  {
+    q:'목표 천체를 빠르게 찾을 때 가장 먼저 사용하는 부품은?',
+    opts:['접안렌즈','보조 망원경','초점조절나사','대물렌즈'],
+    correct:1
+  },
+  {
+    q:'상이 흐릿하게 보일 때 조절해야 하는 부품은?',
+    opts:['가대','경통','초점조절나사','보조 망원경'],
+    correct:2
+  }
+];
+let m4answers = new Array(quiz.length).fill(null);
+
+function renderMission4(){
+  m4answers = new Array(quiz.length).fill(null);
+  const qHtml = quiz.map((item,qi)=>`
+    <div class="quiz-q">
+      <p>${qi+1}. ${item.q}</p>
+      ${item.opts.map((o,oi)=>`<button class="opt" data-q="${qi}" data-o="${oi}">${o}</button>`).join('')}
+    </div>
+  `).join('');
+
+  document.getElementById('panel').innerHTML = `
+    <div class="m-title">미션 4 · 마지막 관문, 실전 퀴즈</div>
+    <p class="m-desc">지금까지 배운 내용을 실제 관측 상황에 적용해보세요.</p>
+    ${qHtml}
+    <div class="hint" id="m4hint"></div>
+    <div class="btn-row">
+      <button class="primary" id="m4submit" disabled>제출하고 관측 완료하기</button>
+    </div>
+  `;
+
+  document.querySelectorAll('.opt').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const qi = btn.dataset.q;
+      document.querySelectorAll(`.opt[data-q="${qi}"]`).forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      m4answers[qi]=parseInt(btn.dataset.o);
+      if(m4answers.every(a=>a!==null)){
+        document.getElementById('m4submit').disabled=false;
+      }
+    });
+  });
+
+  document.getElementById('m4submit').addEventListener('click', ()=>{
+    let allCorrect=true;
+    quiz.forEach((item,qi)=>{
+      document.querySelectorAll(`.opt[data-q="${qi}"]`).forEach((b,oi)=>{
+        if(oi===item.correct) b.classList.add('correct');
+        else if(oi===m4answers[qi]) b.classList.add('incorrect');
+        b.style.pointerEvents='none';
+      });
+      if(m4answers[qi]!==item.correct) allCorrect=false;
+    });
+    document.getElementById('m4submit').style.display='none';
+    if(allCorrect){
+      document.getElementById('m4hint').textContent='모두 정답이에요! 관측 준비 완료 🌌';
+      const nextBtn=document.createElement('button');
+      nextBtn.className='primary';
+      nextBtn.textContent='관측 결과 확인하기';
+      nextBtn.style.marginTop='14px';
+      nextBtn.addEventListener('click', goNext);
+      document.getElementById('panel').appendChild(nextBtn);
+    } else {
+      document.getElementById('m4hint').textContent='틀린 문제가 있어요. 초록색이 정답이에요. 다시 도전해보세요!';
+      const retryBtn=document.createElement('button');
+      retryBtn.className='ghost';
+      retryBtn.textContent='다시 풀기';
+      retryBtn.style.marginTop='14px';
+      retryBtn.addEventListener('click', renderMission4);
+      document.getElementById('panel').appendChild(retryBtn);
+    }
+  });
+}
+
+/* ================= FINAL ================= */
+function renderFinal(){
+  document.getElementById('panel').innerHTML = `
+    <div class="final">
+      <h2>🔭 관측 준비 완료!</h2>
+      <p>망원경의 구조와 사용법을 모두 익혔어요.<br>이제 진짜 밤하늘로 나가볼 시간이에요.<br>스텔라리움에서 오늘 밤 우리 머리 위에 뜨는 별과 행성을 직접 찾아보세요.</p>
+      <a class="cta" href="https://stellarium-web.org/" target="_blank" rel="noopener">스텔라리움으로 밤하늘 보러 가기</a>
+      <a class="cta secondary" href="https://stellarium.org/ko/" target="_blank" rel="noopener">데스크톱 프로그램 다운로드 (오프라인용)</a>
+    </div>
+  `;
+}
+
+/* ---------- 렌더 라우터 ---------- */
+function render(){
+  if(currentMission===0) renderMission1();
+  else if(currentMission===1) renderMission2();
+  else if(currentMission===2) renderMission3();
+  else if(currentMission===3) renderMission4();
+  else renderFinal();
+}
+renderStart();
+</script>
+</body>
+</html>
